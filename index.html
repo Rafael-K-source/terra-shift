@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TERRA SHIFT — Bumi: Titik Balik</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #070d14;
+      --panel-glass: rgba(11, 20, 32, 0.85);
+      --panel-border: rgba(94, 234, 212, 0.2);
+      --accent-teal: #2dd4bf;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-deep);
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .font-mono-tech {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .glass-panel {
+      background: var(--panel-glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    }
+
+    .glass-card {
+      background: rgba(17, 30, 46, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .glass-card:hover:not(:disabled) {
+      border-color: rgba(45, 212, 191, 0.55);
+      background: rgba(22, 40, 60, 0.94);
+      transform: translateY(-2px);
+    }
+
+    .glass-card.selected {
+      border-color: #2dd4bf;
+      background: rgba(19, 78, 74, 0.48);
+      box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.45), 0 8px 20px rgba(45, 212, 191, 0.18);
+    }
+
+    @keyframes pulseDanger {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.55); }
+      50% { box-shadow: 0 0 16px 4px rgba(244, 63, 94, 0.75); }
+    }
+
+    .danger-pulse {
+      animation: pulseDanger 1.5s infinite;
+    }
+
+    @keyframes floatToast {
+      0% { opacity: 0; transform: translateY(12px) scale(0.96); }
+      12% { opacity: 1; transform: translateY(0) scale(1); }
+      88% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-10px) scale(0.96); }
+    }
+
+    .toast-anim {
+      animation: floatToast 3.6s forwards;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(45, 212, 191, 0.3);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(45, 212, 191, 0.6);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(30, 41, 59, 0.9);
+      height: 6px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2dd4bf;
+      cursor: pointer;
+      border: 2px solid #0f172a;
+      box-shadow: 0 0 8px rgba(45, 212, 191, 0.6);
+    }
+  </style>
+</head>
+<body class="relative select-none">
+
+  <!-- INTERACTIVE 2.5D DIORAMA CANVAS -->
+  <canvas id="dioramaCanvas" class="fixed inset-0 w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+
+  <!-- TOP COMMAND BAR -->
+  <header id="topBar" class="fixed top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+    
+    <!-- Left: Era, Year & Digital Mercury Thermometer -->
+    <div class="glass-panel rounded-2xl px-4 py-2.5 flex items-center gap-4 pointer-events-auto">
+      <div>
+        <div class="flex items-center gap-2">
+          <span id="eraBadge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30">
+            Babak 1: Titik Didih
+          </span>
+          <span id="yearDisplay" class="font-mono-tech text-sm font-bold text-white">2025 • Q1</span>
+        </div>
+        <div class="w-44 h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+          <div id="timelineProgress" class="h-full bg-gradient-to-r from-teal-400 to-emerald-400 transition-all duration-300" style="width: 1%;"></div>
+        </div>
+      </div>
+
+      <div class="h-8 w-px bg-slate-700/70"></div>
+
+      <!-- Digital Mercury Thermometer -->
+      <div id="thermoBox" class="flex items-center gap-2.5 px-2.5 py-1 rounded-xl bg-slate-900/75 border border-slate-700/70 transition-all">
+        <div class="relative w-3.5 h-9 bg-slate-800 rounded-full p-0.5 flex items-end overflow-hidden border border-slate-600/60">
+          <div id="mercuryFill" class="w-full rounded-full bg-gradient-to-t from-amber-500 to-rose-500 transition-all duration-500" style="height: 45%;"></div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Suhu Global</div>
+          <div class="flex items-baseline gap-1">
+            <span id="tempDisplay" class="font-mono-tech text-base font-bold text-amber-400">+1.18°C</span>
+            <span class="text-[10px] text-slate-400 font-mono-tech">/ 1.50°C</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Emissions -->
+      <div class="hidden sm:block">
+        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Emisi Bersih</div>
+        <div class="flex items-baseline gap-1">
+          <span id="emissionDisplay" class="font-mono-tech text-sm font-bold text-rose-400">+8.5 Gt</span>
+          <span class="text-[10px] text-slate-400">/thn</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: The Trilemma Balance (3 Pillars) -->
+    <div class="glass-panel rounded-2xl px-4 py-2 flex items-center gap-4 pointer-events-auto">
+      <!-- Ecological Health -->
+      <div id="pillarEcoBox" class="w-24 sm:w-32">
+        <div class="flex justify-between items-center text-xs mb-1">
+          <span class="flex items-center gap-1 font-semibold text-emerald-300">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22V12m0 0C12 7 7 3 2 3c0 5 4 9 10 9zm0 0c0-5 5-9 10-9 0 5-4 9-10 9z"/></svg>
+            Ekologi
+          </span>
+          <span id="ecoVal" class="font-mono-tech font-bold text-emerald-300">62%</span>
+        </div>
+        <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div id="ecoBar" class="h-full bg-emerald-400 transition-all duration-300" style="width: 62%;"></div>
+        </div>
+      </div>
+
+      <!-- Economic Stability -->
+      <div id="pillarEconBox" class="w-24 sm:w-32">
+        <div class="flex justify-between items-center text-xs mb-1">
+          <span class="flex items-center gap-1 font-semibold text-amber-300">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Ekonomi
+          </span>
+          <span id="econVal" class="font-mono-tech font-bold text-amber-300">68%</span>
+        </div>
+        <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div id="econBar" class="h-full bg-amber-400 transition-all duration-300" style="width: 68%;"></div>
+        </div>
+      </div>
+
+      <!-- Social Approval -->
+      <div id="pillarSocBox" class="w-24 sm:w-32">
+        <div class="flex justify-between items-center text-xs mb-1">
+          <span class="flex items-center gap-1 font-semibold text-sky-300">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Sosial
+          </span>
+          <span id="socVal" class="font-mono-tech font-bold text-sky-300">72%</span>
+        </div>
+        <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div id="socBar" class="h-full bg-sky-400 transition-all duration-300" style="width: 72%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Resources & Time Speed Controls -->
+    <div class="glass-panel rounded-2xl px-3.5 py-2 flex items-center gap-3 pointer-events-auto">
+      <div class="flex items-center gap-3 pr-2 border-r border-slate-700/70">
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-semibold">Kas Negara</div>
+          <div id="budgetDisplay" class="font-mono-tech text-sm font-bold text-emerald-300">$450M</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-semibold">Politik</div>
+          <div id="polDisplay" class="font-mono-tech text-sm font-bold text-purple-300">60 CP</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-semibold">Riset</div>
+          <div id="resDisplay" class="font-mono-tech text-sm font-bold text-cyan-300">25 RP</div>
+        </div>
+      </div>
+
+      <!-- Time Controls -->
+      <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-700/70">
+        <button onclick="setSpeed(0)" id="btnSpeed0" title="Jeda (Pause)" class="speed-btn px-2 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">❚❚</button>
+        <button onclick="setSpeed(1)" id="btnSpeed1" title="Kecepatan Normal" class="speed-btn px-2 py-1 rounded-lg text-xs font-bold bg-teal-500/30 text-teal-300 border border-teal-400/40">1x</button>
+        <button onclick="setSpeed(2)" id="btnSpeed2" title="Kecepatan 2x" class="speed-btn px-2 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">2x</button>
+        <button onclick="setSpeed(3)" id="btnSpeed3" title="Kecepatan 3x" class="speed-btn px-2 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">3x</button>
+      </div>
+
+      <!-- Audio Toggle -->
+      <button onclick="toggleAudio()" id="btnAudio" title="Suara Lingkungan Adaptif" class="p-2 rounded-xl bg-slate-900/80 border border-slate-700/70 text-slate-300 hover:text-teal-300 hover:border-teal-400/40">
+        <svg id="audioIconOff" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        <svg id="audioIconOn" class="w-4 h-4 hidden text-teal-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- FLOATING TILE INSPECTOR & MAP CONTROLS (LEFT SIDE) -->
+  <aside class="fixed left-3 top-24 z-10 flex flex-col gap-2 pointer-events-none">
+    <!-- Camera controls -->
+    <div class="glass-panel rounded-xl p-1.5 flex flex-col gap-1 w-fit pointer-events-auto">
+      <button onclick="adjustZoom(0.15)" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 font-bold text-sm" title="Perbesar">+</button>
+      <button onclick="adjustZoom(-0.15)" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 font-bold text-sm" title="Perkecil">−</button>
+      <button onclick="resetCamera()" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 text-xs" title="Reset Posisi Peta">⌂</button>
+    </div>
+
+    <!-- Hovered/Selected Tile Info -->
+    <div id="tileInspector" class="glass-panel rounded-2xl p-3.5 w-60 sm:w-64 pointer-events-auto transition-opacity duration-200">
+      <div class="flex items-center justify-between mb-1">
+        <span id="tileTerrainTag" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-300">Wilayah Kepulauan</span>
+        <span id="tileCoords" class="font-mono-tech text-[10px] text-slate-400">[3, 4]</span>
+      </div>
+      <h3 id="tileTitle" class="font-display text-sm font-bold text-white">Arahkan Kursor ke Peta</h3>
+      <p id="tileDesc" class="text-xs text-slate-300/90 mt-1 leading-relaxed">
+        Klik petak lahan di diorama untuk membangun infrastruktur mitigasi atau adaptasi iklim.
+      </p>
+      <div id="tileStats" class="mt-2.5 pt-2 border-t border-slate-700/60 flex flex-wrap gap-2 text-[11px] font-mono-tech hidden"></div>
+    </div>
+  </aside>
+
+  <!-- FLOATING NEWS & ADVISOR TICKER (RIGHT SIDE) -->
+  <aside id="alertFeed" class="fixed right-3 top-24 z-10 w-72 flex flex-col gap-2 pointer-events-none"></aside>
+
+  <!-- BOTTOM COMMAND DECK (ACTION MENU) -->
+  <footer class="fixed bottom-3 left-3 right-3 z-20 flex flex-col items-center pointer-events-none">
+    
+    <!-- Expandable Drawer Content -->
+    <div id="deckDrawer" class="glass-panel rounded-2xl w-full max-w-5xl mb-2 p-3.5 pointer-events-auto transition-all duration-200 max-h-[38vh] overflow-y-auto">
+      
+      <!-- TAB 1: KONSTRUKSI INFRASTRUKTUR -->
+      <div id="tabBuild" class="tab-content">
+        <div class="flex items-center justify-between mb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-teal-300">Infrastruktur Mitigasi & Adaptasi</span>
+            <span id="selectedBuildHint" class="text-xs text-slate-400 hidden sm:inline">• Pilih bangunan lalu klik petak peta yang sesuai</span>
+          </div>
+          <button onclick="selectBuildTool(null)" id="btnCancelBuild" class="hidden text-xs px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30">
+            Batal Pilih (ESC)
+          </button>
+        </div>
+        <div id="buildCardsContainer" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2"></div>
+      </div>
+
+      <!-- TAB 2: KEBIJAKAN & PAJAK KARBON -->
+      <div id="tabPolicy" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <!-- Carbon Tax Dial -->
+          <div class="lg:col-span-4 glass-card rounded-xl p-3 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-300">Tarif Pajak Karbon</span>
+                <span id="carbonTaxLabel" class="font-mono-tech text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Sedang ($15/Gt)</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Pajak tinggi menambah kas dari PLTU fosil & menekan emisi, namun menurunkan stabilitas ekonomi.</p>
+            </div>
+            <div class="mt-3">
+              <input type="range" id="carbonTaxSlider" min="0" max="3" step="1" value="1" oninput="updateCarbonTax(this.value)" class="w-full">
+              <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mt-1">
+                <span>0% Bebas</span>
+                <span>Rendah</span>
+                <span>Sedang</span>
+                <span>Ekstrem</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Policy Cards -->
+          <div id="policyCardsContainer" class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: DUAL TECH-TREE (MITIGASI VS ADAPTASI) -->
+      <div id="tabTech" class="tab-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-300 mb-2 flex items-center gap-1.5">
+              <span>⚡ Cabang Mitigasi (Tekan Emisi & Suhu)</span>
+            </div>
+            <div id="techMitigationList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+          </div>
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-sky-300 mb-2 flex items-center gap-1.5">
+              <span>🛡️ Cabang Adaptasi (Ketahanan Bencana & Sosial)</span>
+            </div>
+            <div id="techAdaptationList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: TELEMETRI RUMUS KARBON & TARGET IKLIM -->
+      <div id="tabSdg" class="tab-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          <div class="md:col-span-5 glass-card rounded-xl p-3">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-teal-300 mb-1">Simulasi Ekonomi Karbon (IPCC Model)</div>
+            <div id="formulaBreakdown" class="font-mono-tech text-[11px] text-slate-300 space-y-1"></div>
+          </div>
+          <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2" id="sdgTargetsContainer"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="glass-panel rounded-2xl p-1.5 flex flex-wrap justify-center items-center gap-1.5 pointer-events-auto">
+      <button onclick="switchTab('Build')" id="navBuild" class="nav-tab px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 bg-teal-500/25 text-teal-300 border border-teal-400/40">
+        <span>🏗️ Infrastruktur</span>
+      </button>
+      <button onclick="switchTab('Policy')" id="navPolicy" class="nav-tab px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 text-slate-300 hover:bg-slate-800/70">
+        <span>📜 Kebijakan & Pajak</span>
+      </button>
+      <button onclick="switchTab('Tech')" id="navTech" class="nav-tab px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 text-slate-300 hover:bg-slate-800/70">
+        <span>🔬 Riset (Dual Tech-Tree)</span>
+      </button>
+      <button onclick="switchTab('Sdg')" id="navSdg" class="nav-tab px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 text-slate-300 hover:bg-slate-800/70">
+        <span>🌍 Telemetri & Target</span>
+      </button>
+    </nav>
+  </footer>
+
+  <!-- NARRATIVE DILEMMA / CRISIS EVENT MODAL -->
+  <div id="eventModal" class="fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-xl w-full p-6 border border-teal-400/30 shadow-2xl transform transition-all">
+      <div class="flex items-center justify-between mb-3">
+        <span id="eventCategoryBadge" class="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
+          Dilema Moral & Kebijakan
+        </span>
+        <span id="eventYearTag" class="font-mono-tech text-xs text-slate-400">Tahun 2028</span>
+      </div>
+
+      <h2 id="eventTitle" class="font-display text-xl sm:text-2xl font-bold text-white mb-3">
+        Asap dan Periuk Nasi
+      </h2>
+
+      <!-- Advisor Box -->
+      <div class="bg-slate-900/85 border border-slate-700/80 rounded-2xl p-4 mb-4 flex gap-3.5 items-start">
+        <div id="advisorAvatar" class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-700 flex items-center justify-center text-white font-display font-bold text-lg shrink-0 shadow-lg">
+          M
+        </div>
+        <div>
+          <div id="advisorName" class="text-xs font-bold text-teal-300 mb-1">Maya — Penasihat Kebijakan</div>
+          <p id="eventDialogue" class="text-sm text-slate-200 leading-relaxed">
+            "Direktur, para pekerja dari sektor batu bara memblokade gerbang utama..."
+          </p>
+        </div>
+      </div>
+
+      <!-- Choices -->
+      <div id="eventChoices" class="space-y-2.5"></div>
+    </div>
+  </div>
+
+  <!-- START BRIEFING SCREEN -->
+  <div id="startModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-lg flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 sm:p-8 border border-teal-400/35 shadow-2xl">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+          Global Climate Action Simulation
+        </span>
+        <span class="font-mono-tech text-xs text-slate-400">2025 — 2075</span>
+      </div>
+      <h1 class="font-display text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+        TERRA SHIFT <span class="text-teal-400 font-normal text-xl sm:text-2xl block sm:inline">— Bumi: Titik Balik</span>
+      </h1>
+      <p class="text-sm text-slate-300 mt-3 leading-relaxed">
+        Selamat datang, <strong>Global Climate Director</strong>. Anda ditugaskan memimpin transisi iklim sebuah negara kepulauan berkembang selama 50 tahun (2025–2075).
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-5">
+        <div class="bg-slate-900/75 border border-slate-700/70 rounded-2xl p-3.5">
+          <div class="text-teal-300 font-bold text-xs uppercase mb-1">🎯 Misi Utama</div>
+          <p class="text-xs text-slate-300">Jaga kenaikan suhu global tetap di bawah <strong class="text-amber-300">+1.50°C</strong> dan capai emisi mendekati Net-Zero pada tahun 2075.</p>
+        </div>
+        <div class="bg-slate-900/75 border border-slate-700/70 rounded-2xl p-3.5">
+          <div class="text-amber-300 font-bold text-xs uppercase mb-1">⚖️ The Trilemma</div>
+          <p class="text-xs text-slate-300">Seimbangkan <strong>Ekologi</strong>, <strong>Ekonomi</strong>, dan <strong>Dukungan Sosial</strong>. Jika salah satu menyentuh 0%, pemerintahan runtuh.</p>
+        </div>
+        <div class="bg-slate-900/75 border border-slate-700/70 rounded-2xl p-3.5">
+          <div class="text-rose-300 font-bold text-xs uppercase mb-1">⚠️ Dilema Nyata</div>
+          <p class="text-xs text-slate-300">Menutup PLTU terlalu cepat memicu PHK & protes buruh. Waspadai pula tawaran <em>Greenwashing</em> korporasi!</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-700/60">
+        <div class="text-xs text-slate-400">
+          💡 <em>Tip: Klik & geser untuk menggerakkan peta, scroll/tombol untuk zoom.</em>
+        </div>
+        <button onclick="startGame()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-display font-bold text-sm shadow-lg shadow-teal-500/25 transition-all cursor-pointer">
+          Mulai Mandat 2025 →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- END GAME / POST-MORTEM MODAL -->
+  <div id="endModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-lg hidden items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-xl w-full p-6 sm:p-8 border border-teal-400/35 shadow-2xl text-center">
+      <div id="endBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
+        Evaluasi Akhir Mandat Iklim
+      </div>
+      <h2 id="endTitle" class="font-display text-2xl sm:text-3xl font-extrabold text-white mb-2">
+        Tahun 2075 Tercapai!
+      </h2>
+      <p id="endSummary" class="text-sm text-slate-300 leading-relaxed mb-5">
+        Ringkasan hasil kepemimpinan Anda...
+      </p>
+
+      <div id="endStatsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6 text-left"></div>
+
+      <button onclick="location.reload()" class="px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-display font-bold text-sm transition-all cursor-pointer">
+        Mainkan Ulang Simulasi
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. AUDIO SYNTHESIZER (ADAPTIVE AMBIENT & SFX - WEB AUDIO API)
+    // =========================================================================
+    const SoundEngine = {
+      ctx: null,
+      enabled: false,
+      droneOsc: null,
+      droneGain: null,
+
+      init() {
+        if (this.ctx) return;
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+
+          this.droneOsc = this.ctx.createOscillator();
+          this.droneGain = this.ctx.createGain();
+          this.droneOsc.type = 'sine';
+          this.droneOsc.frequency.value = 110;
+          this.droneGain.gain.value = 0.0;
+          this.droneOsc.connect(this.droneGain);
+          this.droneGain.connect(this.ctx.destination);
+          this.droneOsc.start();
+        } catch (err) {
+          console.warn('AudioContext tidak didukung:', err);
+        }
+      },
+
+      toggle() {
+        this.init();
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        this.enabled = !this.enabled;
+        this.updateAmbience(GameState.temp, GameState.eco);
+        return this.enabled;
+      },
+
+      updateAmbience(temp, eco) {
+        if (!this.ctx || !this.droneGain) return;
+        if (!this.enabled) {
+          this.droneGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.3);
+          return;
+        }
+        const isCrisis = temp > 1.5 || eco < 35;
+        this.droneOsc.type = isCrisis ? 'sawtooth' : 'sine';
+        this.droneOsc.frequency.setTargetAtTime(isCrisis ? 73.42 : 130.81, this.ctx.currentTime, 0.8);
+        this.droneGain.gain.setTargetAtTime(isCrisis ? 0.018 : 0.025, this.ctx.currentTime, 0.5);
+      },
+
+      playTone(freq, type = 'sine', duration = 0.15, vol = 0.08) {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+      },
+
+      playBuild() {
+        this.playTone(320, 'triangle', 0.12, 0.1);
+        setTimeout(() => this.playTone(480, 'sine', 0.18, 0.09), 70);
+      },
+
+      playAlert() {
+        this.playTone(220, 'sawtooth', 0.25, 0.09);
+        setTimeout(() => this.playTone(185, 'sawtooth', 0.35, 0.09), 180);
+      },
+
+      playClick() {
+        this.playTone(540, 'sine', 0.06, 0.05);
+      }
+    };
+
+    function toggleAudio() {
+      const on = SoundEngine.toggle();
+      document.getElementById('audioIconOn').classList.toggle('hidden', !on);
+      document.getElementById('audioIconOff').classList.toggle('hidden', on);
+    }
+
+    // =========================================================================
+    // 2. GAME DATA & CONFIGURATION (FROM GDD PDF)
+    // =========================================================================
+    const GRID_SIZE = 8;
+
+    const BUILDINGS = {
+      solar: {
+        id: 'solar',
+        name: 'PLTS Surya',
+        category: 'mitigation',
+        cost: 55,
+        emission: -1.4,
+        rev: 4,
+        eco: 2,
+        soc: 1,
+        allowedTerrain: ['grassland', 'highland'],
+        reqTech: null,
+        desc: 'Energi surya bersih. Mengurangi ketergantungan fosil di daratan.',
+        color: '#38bdf8'
+      },
+      wind: {
+        id: 'wind',
+        name: 'Turbin Lepas Pantai',
+        category: 'mitigation',
+        cost: 75,
+        emission: -2.1,
+        rev: 6,
+        eco: 3,
+        soc: 1,
+        allowedTerrain: ['coast', 'ocean'],
+        reqTech: 'offshore_wind',
+        desc: 'Turbin angin laut berkapasitas besar. Butuh riset Turbin Lepas Pantai.',
+        color: '#e2e8f0'
+      },
+      mangrove: {
+        id: 'mangrove',
+        name: 'Restorasi Mangrove',
+        category: 'adaptation',
+        cost: 35,
+        emission: -1.1,
+        rev: 1,
+        eco: 4,
+        soc: 2,
+        protectsCoast: true,
+        allowedTerrain: ['coast'],
+        reqTech: null,
+        desc: 'Menyerap karbon biru & menjadi pemecah ombak alami dari banjir rob.',
+        color: '#10b981'
+      },
+      seawall: {
+        id: 'seawall',
+        name: 'Tanggul Laut Raksasa',
+        category: 'adaptation',
+        cost: 80,
+        emission: 0.2,
+        rev: -2,
+        eco: -1,
+        soc: 4,
+        protectsCoast: true,
+        allowedTerrain: ['coast'],
+        reqTech: 'seawall_tech',
+        desc: 'Benteng beton pelindung kota pesisir dari kenaikan muka air laut.',
+        color: '#94a3b8'
+      },
+      forest: {
+        id: 'forest',
+        name: 'Reboisasi Hutan',
+        category: 'mitigation',
+        cost: 30,
+        emission: -1.2,
+        rev: 0,
+        eco: 4,
+        soc: 1,
+        allowedTerrain: ['grassland', 'highland'],
+        reqTech: null,
+        desc: 'Menanam kembali hutan tropis sebagai penyerap CO2 alami.',
+        color: '#22c55e'
+      },
+      ccs: {
+        id: 'ccs',
+        name: 'Direct Air Capture',
+        category: 'mitigation',
+        cost: 130,
+        emission: -3.5,
+        rev: -4,
+        eco: 4,
+        soc: 1,
+        allowedTerrain: ['grassland', 'highland'],
+        reqTech: 'dac_tech',
+        desc: 'Teknologi penangkap karbon langsung dari atmosfer skala industri.',
+        color: '#a855f7'
+      },
+      demolish: {
+        id: 'demolish',
+        name: 'Tutup / Bongkar',
+        category: 'action',
+        cost: 25,
+        emission: 0,
+        rev: 0,
+        eco: 0,
+        soc: 0,
+        allowedTerrain: ['grassland', 'highland', 'coast', 'ocean'],
+        reqTech: null,
+        desc: 'Tutup PLTU Batubara (memicu protes buruh kecuali ada Just Transition) atau bongkar bangunan.',
+        color: '#f43f5e'
+      }
+    };
+
+    const TECH_TREE = [
+      {
+        id: 'offshore_wind',
+        branch: 'mitigation',
+        name: 'Turbin Angin Lepas Pantai',
+        costRP: 30,
+        desc: 'Membuka pembangunan turbin angin berdaya tinggi di wilayah pesisir & laut.'
+      },
+      {
+        id: 'ev_grid',
+        branch: 'mitigation',
+        name: 'Transportasi Publik Listrik',
+        costRP: 45,
+        desc: 'Mengurangi emisi transportasi kota sebesar 40% secara permanen.'
+      },
+      {
+        id: 'dac_tech',
+        branch: 'mitigation',
+        name: 'Carbon Capture & DAC',
+        costRP: 70,
+        desc: 'Membuka fasilitas Direct Air Capture untuk menarik CO2 dari udara.'
+      },
+      {
+        id: 'seawall_tech',
+        branch: 'adaptation',
+        name: 'Rekayasa Tanggul Laut',
+        costRP: 30,
+        desc: 'Membuka konstruksi Seawall raksasa untuk mencegah banjir rob pesisir.'
+      },
+      {
+        id: 'just_transition',
+        branch: 'adaptation',
+        name: 'Program Just Transition',
+        costRP: 45,
+        desc: 'Pelatihan kerja hijau; menutup PLTU tidak lagi menjatuhkan Dukungan Sosial.'
+      },
+      {
+        id: 'climate_crops',
+        branch: 'adaptation',
+        name: 'Pertanian Tahan Kekeringan',
+        costRP: 60,
+        desc: 'Mengurangi dampak gelombang panas & kekeringan terhadap Ekonomi & Sosial.'
+      }
+    ];
+
+    const POLICIES = [
+      {
+        id: 'green_campaign',
+        name: 'Kampanye Edukasi Iklim',
+        costBudget: 25,
+        costPol: 10,
+        cooldown: 0,
+        tag: 'Edukasi',
+        desc: '+8% Sosial, +12 Poin Riset. Warga lebih menerima transisi energi.',
+        effect: (s) => {
+          s.soc = clamp(s.soc + 8, 0, 100);
+          s.rp += 12;
+          s.educationLevel += 1;
+          addToast('Kampanye Edukasi Hijau meningkatkan kesadaran publik (+8% Sosial, +12 RP).', 'teal');
+        }
+      },
+      {
+        id: 'ev_subsidy',
+        name: 'Subsidi Kendaraan Listrik',
+        costBudget: 60,
+        costPol: 12,
+        cooldown: 0,
+        tag: 'Transisi',
+        desc: '-1.5 Gt/thn emisi permanen, +4% Ekologi. Menguras kas negara.',
+        effect: (s) => {
+          s.transportMitigation += 1.5;
+          s.eco = clamp(s.eco + 4, 0, 100);
+          addToast('Subsidi EV disahkan! Emisi transportasi turun -1.5 Gt/thn.', 'emerald');
+        }
+      },
+      {
+        id: 'forest_moratorium',
+        name: 'Moratorium Hutan & Gambut',
+        costBudget: 20,
+        costPol: 15,
+        cooldown: 0,
+        tag: 'Konservasi',
+        desc: '+7% Ekologi, -3% Ekonomi jangka pendek. Menghentikan deforestasi liar.',
+        effect: (s) => {
+          s.eco = clamp(s.eco + 7, 0, 100);
+          s.econ = clamp(s.econ - 3, 0, 100);
+          addToast('Moratorium hutan berlaku! Ekosistem pulih (+7% Ekologi).', 'emerald');
+        }
+      },
+      {
+        id: 'gcf_diplomacy',
+        name: 'Ajukan Green Climate Fund',
+        costBudget: 0,
+        costPol: 25,
+        cooldown: 0,
+        tag: 'Diplomasi',
+        desc: 'Dapatkan hibah +$140M jika Ekologi > 55% & Emisi tidak melonjak.',
+        effect: (s) => {
+          if (s.eco >= 55 && s.netEmission <= 6.5) {
+            s.budget += 140;
+            s.gcfApproved += 1;
+            addToast('Pendanaan Green Climate Fund disetujui! Kas Negara +$140M.', 'emerald');
+          } else {
+            addToast('Pengajuan GCF ditolak: Komite menuntut Ekologi >= 55% & Emisi <= 6.5 Gt.', 'amber');
+          }
+        }
+      }
+    ];
+
+    const NARRATIVE_EVENTS = [
+      {
+        id: 'coal_dilemma',
+        minYear: 2028,
+        triggered: false,
+        category: 'Dilema Sosial vs. Mitigasi',
+        title: 'Asap dan Periuk Nasi',
+        advisor: 'Maya — Penasihat Kebijakan',
+        avatar: 'M',
+        dialogue: '"Direktur, para pekerja dari sektor batu bara memblokade gerbang utama PLTU. Mereka bilang, \'Kalian menyelamatkan bumi untuk masa depan, tapi anak-anak kami kelaparan malam ini.\' Bagaimana keputusan Anda?"',
+        choices: [
+          {
+            label: 'Tutup pabrik sesuai jadwal & alihkan anggaran ke riset',
+            impactText: 'Emisi -3.0 Gt • Sosial -16% • +15 RP',
+            apply: (s) => {
+              s.cumulativeEmission = Math.max(0, s.cumulativeEmission - 3.0);
+              s.soc = clamp(s.soc - 16, 0, 100);
+              s.rp += 15;
+              addToast('PLTU ditutup tegas! Target emisi membaik, namun buruh menggelar mogok nasional.', 'amber');
+            }
+          },
+          {
+            label: 'Kompromi: Subsidi transisi & pelatihan kerja hijau gratis',
+            impactText: 'Kas -$75M • Sosial +10% • Ekonomi +3%',
+            apply: (s) => {
+              s.budget = Math.max(0, s.budget - 75);
+              s.soc = clamp(s.soc + 10, 0, 100);
+              s.econ = clamp(s.econ + 3, 0, 100);
+              addToast('Program transisi buruh meredam konflik sosial dan menjaga daya beli warga.', 'teal');
+            }
+          },
+          {
+            label: 'Alihkan buruh menjadi tenaga konstruksi proyek adaptasi pesisir',
+            impactText: 'Kas -$45M • Ekologi +5% • Sosial +4%',
+            apply: (s) => {
+              s.budget = Math.max(0, s.budget - 45);
+              s.eco = clamp(s.eco + 5, 0, 100);
+              s.soc = clamp(s.soc + 4, 0, 100);
+              addToast('Ribuan mantan pekerja tambang kini membangun sabuk hijau pesisir!', 'emerald');
+            }
+          }
+        ]
+      },
+      {
+        id: 'greenwashing_offer',
+        minYear: 2032,
+        triggered: false,
+        category: 'Inspeksi Korporasi • Greenwashing',
+        title: 'Tawaran Proyek "Eco-Carbon" Murah',
+        advisor: 'Maya — Penasihat Kebijakan',
+        avatar: 'M',
+        dialogue: '"Direktur, konsorsium swasta menawarkan proyek \'Hutan Karbon Instan\' seharga hanya $20M dengan klaim penyerapan karbon besar-besaran. Laporan teknis mereka terlihat buru-buru. Apakah kita terima atau audit dulu?"',
+        choices: [
+          {
+            label: 'Terima langsung demi menghemat anggaran negara',
+            impactText: 'Kas -$20M • Risiko Greenwashing Tersembunyi!',
+            apply: (s) => {
+              s.cumulativeEmission += 6.5;
+              s.eco = clamp(s.eco - 9, 0, 100);
+              s.soc = clamp(s.soc - 10, 0, 100);
+              addToast('SKANDAL MEDIA: Proyek ternyata Greenwashing! Emisi diam-diam naik & reputasi jatuh.', 'rose');
+            }
+          },
+          {
+            label: 'Lakukan audit ilmiah independen sebelum menandatangani',
+            impactText: 'Politik -10 CP • +15 RP • Ekologi +4%',
+            apply: (s) => {
+              s.cp = Math.max(0, s.cp - 10);
+              s.rp += 15;
+              s.eco = clamp(s.eco + 4, 0, 100);
+              addToast('Audit membongkar praktik Greenwashing! Publik memuji transparansi pemerintah.', 'emerald');
+            }
+          }
+        ]
+      },
+      {
+        id: 'climate_aid_trap',
+        minYear: 2038,
+        triggered: false,
+        category: 'Diplomasi Internasional',
+        title: 'Bantuan Bersyarat Konglomerat Global',
+        advisor: 'Arne — Menteri Keuangan',
+        avatar: 'A',
+        dialogue: '"Direktur, Bank Investasi Internasional menawarkan dana segar $220M untuk transisi energi kita. Tapi ada syarat halusnya: 60% kontrak pengadaan panel surya harus diberikan ke perusahaan multinasional mereka, bukan industri lokal."',
+        choices: [
+          {
+            label: 'Terima pinjaman asing demi percepatan infrastruktur hijau',
+            impactText: 'Kas +$220M • Ekonomi -8% • Ekologi +5%',
+            apply: (s) => {
+              s.budget += 220;
+              s.econ = clamp(s.econ - 8, 0, 100);
+              s.eco = clamp(s.eco + 5, 0, 100);
+              addToast('Dana hijau cair +$220M, namun produsen lokal tertekan impor.', 'amber');
+            }
+          },
+          {
+            label: 'Tolak syaratnya & berdayakan industri manufaktur domestik',
+            impactText: 'Ekonomi +8% • Sosial +6% • Politik +10 CP',
+            apply: (s) => {
+              s.econ = clamp(s.econ + 8, 0, 100);
+              s.soc = clamp(s.soc + 6, 0, 100);
+              s.cp += 10;
+              addToast('Kedaulatan industri hijau domestik terjaga dan mendapat dukungan rakyat!', 'emerald');
+            }
+          }
+        ]
+      },
+      {
+        id: 'climate_refugees',
+        minYear: 2046,
+        triggered: false,
+        category: 'Adaptasi & Kemanusiaan',
+        title: 'Warisan untuk Generasi: Banjir Rob Pesisir',
+        advisor: 'Baskoro — Kepala Badan Bencana',
+        avatar: 'B',
+        dialogue: '"Air laut pasang telah merendam 4 desa nelayan di pesisir selatan. 15.000 jiwa kehilangan tempat tinggal dan mendesak masuk ke kota besar. Kapasitas pengungsian kita sudah penuh, Direktur."',
+        choices: [
+          {
+            label: 'Bangun kawasan hunian vertikal relokasi permanen di dataran tinggi',
+            impactText: 'Kas -$110M • Sosial +12% • Ekonomi +4%',
+            apply: (s) => {
+              s.budget = Math.max(0, s.budget - 110);
+              s.soc = clamp(s.soc + 12, 0, 100);
+              s.econ = clamp(s.econ + 4, 0, 100);
+              addToast('Kota relokasi permanen menyelamatkan ribuan keluarga pesisir.', 'emerald');
+            }
+          },
+          {
+            label: 'Dirikan tenda darurat sementara di pinggiran kota',
+            impactText: 'Kas -$25M • Sosial -14% • Ekonomi -5%',
+            apply: (s) => {
+              s.budget = Math.max(0, s.budget - 25);
+              s.soc = clamp(s.soc - 14, 0, 100);
+              s.econ = clamp(s.econ - 5, 0, 100);
+              addToast('Tenda darurat memicu kepadatan & gesekan sosial di pinggiran kota.', 'rose');
+            }
+          }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 3. GAME STATE & INITIALIZATION
+    // =========================================================================
+    const GameState = {
+      running: false,
+      speed: 0,
+      year: 2025,
+      quarter: 1,
+      temp: 1.18,
+      cumulativeEmission: 12.0,
+      netEmission: 8.5,
+      eco: 62,
+      econ: 68,
+      soc: 72,
+      budget: 450,
+      cp: 60,
+      rp: 25,
+      carbonTaxLevel: 1, // 0: Free, 1: Low ($10), 2: Med ($20), 3: Extreme ($35)
+      transportMitigation: 0,
+      educationLevel: 1,
+      gcfApproved: 0,
+      unlockedTech: new Set(),
+      selectedBuild: null,
+      activeTab: 'Build',
+      grid: [],
+      particles: [],
+      coalEventTriggered: false
+    };
+
+    function initMap() {
+      // 8x8 Island Archipelago Layout
+      const layout = [
+        ['ocean', 'ocean', 'coast', 'coast', 'coast', 'ocean', 'ocean', 'ocean'],
+        ['ocean', 'coast', 'grassland', 'highland', 'grassland', 'coast', 'ocean', 'ocean'],
+        ['coast', 'grassland', 'highland', 'highland', 'grassland', 'grassland', 'coast', 'ocean'],
+        ['coast', 'grassland', 'grassland', 'grassland', 'grassland', 'grassland', 'coast', 'ocean'],
+        ['ocean', 'coast', 'grassland', 'grassland', 'grassland', 'coast', 'coast', 'ocean'],
+        ['ocean', 'coast', 'grassland', 'grassland', 'coast', 'ocean', 'coast', 'ocean'],
+        ['ocean', 'ocean', 'coast', 'coast', 'ocean', 'ocean', 'ocean', 'ocean'],
+        ['ocean', 'ocean', 'ocean', 'ocean', 'ocean', 'ocean', 'ocean', 'ocean']
+      ];
+
+      GameState.grid = [];
+      for (let r = 0; r < GRID_SIZE; r++) {
+        const row = [];
+        for (let c = 0; c < GRID_SIZE; c++) {
+          row.push({
+            r,
+            c,
+            terrain: layout[r][c],
+            structure: null,
+            flooded: false,
+            animOffset: Math.random() * Math.PI * 2
+          });
+        }
+        GameState.grid.push(row);
+      }
+
+      // Initial Structures (Developing Archipelago in 2025)
+      GameState.grid[3][3].structure = 'city';
+      GameState.grid[2][4].structure = 'city';
+      GameState.grid[3][2].structure = 'coal';
+      GameState.grid[4][4].structure = 'coal';
+      GameState.grid[2][2].structure = 'coal';
+      GameState.grid[1][3].structure = 'forest';
+      GameState.grid[2][3].structure = 'forest';
+      GameState.grid[1][4].structure = 'forest';
+      GameState.grid[3][4].structure = 'forest';
+      GameState.grid[4][2].structure = 'forest';
+      GameState.grid[0][3].structure = 'mangrove';
+      GameState.grid[5][4].structure = 'mangrove';
+
+      recalculateMetrics();
+    }
+
+    // =========================================================================
+    // 4. CARBON ECONOMY & SIMULATION FORMULAS (FROM GDD PDF)
+    // =========================================================================
+    function getCounts() {
+      let coal = 0, cities = 0, forests = 0, mangroves = 0, solar = 0, wind = 0, ccs = 0, seawalls = 0;
+      let totalCoast = 0, protectedCoast = 0;
+
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const t = GameState.grid[r][c];
+          if (t.terrain === 'coast') {
+            totalCoast++;
+            if (t.structure === 'mangrove' || t.structure === 'seawall') protectedCoast++;
+          }
+          if (t.structure === 'coal') coal++;
+          else if (t.structure === 'city') cities++;
+          else if (t.structure === 'forest') forests++;
+          else if (t.structure === 'mangrove') mangroves++;
+          else if (t.structure === 'solar') solar++;
+          else if (t.structure === 'wind') wind++;
+          else if (t.structure === 'ccs') ccs++;
+          else if (t.structure === 'seawall') seawalls++;
+        }
+      }
+      return { coal, cities, forests, mangroves, solar, wind, ccs, seawalls, totalCoast, protectedCoast };
+    }
+
+    function recalculateMetrics() {
+      const cnt = getCounts();
+      const evTechReduction = GameState.unlockedTech.has('ev_grid') ? 0.6 : 1.0;
+
+      // Formula: E_total = (I_fosil * 2.5) + (T_transport * 1.2) - (F_hutan * 0.8) - (Tech_ccs * 3.0) - CleanEnergy
+      const fossilEm = cnt.coal * 2.6;
+      const transportEm = Math.max(0, (cnt.cities * 1.4 * evTechReduction) - GameState.transportMitigation);
+      const forestSink = (cnt.forests * 0.85) + (cnt.mangroves * 1.1);
+      const cleanSink = (cnt.solar * 1.3) + (cnt.wind * 2.0) + (cnt.ccs * 3.5);
+
+      const net = +(fossilEm + transportEm - forestSink - cleanSink).toFixed(2);
+      GameState.netEmission = net;
+
+      // Carbon Tax & National Revenue Calculation
+      const taxRates = [0, 10, 22, 38];
+      const taxRate = taxRates[GameState.carbonTaxLevel];
+      const gdpBase = 90 + (cnt.cities * 24) + (cnt.coal * 10);
+      const taxIncome = Math.round((fossilEm * taxRate) / 4);
+      const maintenance = (cnt.ccs * 3) + (cnt.seawalls * 1);
+      const quarterlyRev = Math.round((gdpBase * 0.15) + taxIncome - maintenance);
+
+      return { cnt, fossilEm, transportEm, forestSink, cleanSink, quarterlyRev, taxRate };
+    }
+
+    // =========================================================================
+    // 5. PLAYER ACTIONS: BUILD, TECH, POLICIES
+    // =========================================================================
+    function selectBuildTool(toolId) {
+      SoundEngine.playClick();
+      GameState.selectedBuild = GameState.selectedBuild === toolId ? null : toolId;
+      document.getElementById('btnCancelBuild').classList.toggle('hidden', !GameState.selectedBuild);
+      renderBuildCards();
+    }
+
+    function handleTileClick(tile) {
+      if (!GameState.running && document.getElementById('startModal').classList.contains('hidden') === false) return;
+      updateTileInspector(tile);
+
+      if (!GameState.selectedBuild) return;
+      const b = BUILDINGS[GameState.selectedBuild];
+      if (!b) return;
+
+      if (b.id === 'demolish') {
+        if (!tile.structure || tile.structure === 'city') {
+          addToast('Tidak ada bangunan yang dapat dibongkar di petak ini.', 'amber');
+          return;
+        }
+        if (GameState.budget < b.cost) {
+          addToast('Anggaran tidak cukup untuk pembongkaran ($25M).', 'rose');
+          return;
+        }
+        const prev = tile.structure;
+        GameState.budget -= b.cost;
+        tile.structure = null;
+        SoundEngine.playBuild();
+        spawnParticles(tile, '#f43f5e');
+
+        if (prev === 'coal') {
+          if (GameState.unlockedTech.has('just_transition')) {
+            GameState.eco = clamp(GameState.eco + 6, 0, 100);
+            addToast('PLTU Batubara ditutup damai berkat program Just Transition (+6% Ekologi).', 'emerald');
+          } else {
+            GameState.eco = clamp(GameState.eco + 6, 0, 100);
+            GameState.econ = clamp(GameState.econ - 6, 0, 100);
+            GameState.soc = clamp(GameState.soc - 10, 0, 100);
+            addToast('PLTU ditutup mendadak! Emisi turun, namun PHK buruh menurunkan Sosial (-10%).', 'amber');
+            if (!GameState.coalEventTriggered) {
+              GameState.coalEventTriggered = true;
+              const coalEv = NARRATIVE_EVENTS.find(e => e.id === 'coal_dilemma');
+              if (coalEv && !coalEv.triggered) {
+                coalEv.triggered = true;
+                setTimeout(() => triggerEvent(coalEv), 450);
+              }
+            }
+          }
+        } else {
+          addToast('Infrastruktur berhasil dibongkar.', 'teal');
+        }
+        recalculateMetrics();
+        updateHUD();
+        return;
+      }
+
+      // Check tech requirement
+      if (b.reqTech && !GameState.unlockedTech.has(b.reqTech)) {
+        addToast(`Membutuhkan riset teknologi terlebih dahulu!`, 'amber');
+        return;
+      }
+
+      // Check terrain
+      if (!b.allowedTerrain.includes(tile.terrain)) {
+        addToast(`${b.name} tidak dapat dibangun di medan ${tile.terrain}.`, 'amber');
+        return;
+      }
+
+      // Check occupied
+      if (tile.structure) {
+        addToast('Petak ini sudah terisi struktur lain.', 'amber');
+        return;
+      }
+
+      // Check budget
+      if (GameState.budget < b.cost) {
+        addToast(`Kas Negara tidak mencukupi ($${b.cost}M diperlukan).`, 'rose');
+        return;
+      }
+
+      // Construct!
+      GameState.budget -= b.cost;
+      tile.structure = b.id;
+      if (b.protectsCoast) tile.flooded = false;
+      GameState.eco = clamp(GameState.eco + b.eco, 0, 100);
+      GameState.soc = clamp(GameState.soc + b.soc, 0, 100);
+      GameState.rp += 3;
+
+      SoundEngine.playBuild();
+      spawnParticles(tile, b.color);
+      addToast(`${b.name} selesai dibangun! (-$${b.cost}M)`, 'emerald');
+
+      recalculateMetrics();
+      updateHUD();
+      updateTileInspector(tile);
+    }
+
+    function updateCarbonTax(val) {
+      GameState.carbonTaxLevel = parseInt(val, 10);
+      const labels = ['Bebas ($0/Gt)', 'Rendah ($10/Gt)', 'Sedang ($22/Gt)', 'Ekstrem ($38/Gt)'];
+      document.getElementById('carbonTaxLabel').textContent = labels[GameState.carbonTaxLevel];
+      SoundEngine.playClick();
+      recalculateMetrics();
+      updateHUD();
+    }
+
+    function enactPolicy(policyId) {
+      const p = POLICIES.find((item) => item.id === policyId);
+      if (!p) return;
+      if (p.cooldown > 0) {
+        addToast(`Kebijakan sedang masa jeda (${p.cooldown} kuartal lagi).`, 'amber');
+        return;
+      }
+      if (GameState.budget < p.costBudget || GameState.cp < p.costPol) {
+        addToast('Kas Negara atau Pengaruh Politik (CP) tidak mencukupi.', 'rose');
+        return;
+      }
+      GameState.budget -= p.costBudget;
+      GameState.cp -= p.costPol;
+      p.cooldown = 6;
+      SoundEngine.playBuild();
+      p.effect(GameState);
+      recalculateMetrics();
+      renderPolicies();
+      updateHUD();
+    }
+
+    function researchTech(techId) {
+      const tech = TECH_TREE.find((t) => t.id === techId);
+      if (!tech || GameState.unlockedTech.has(techId)) return;
+      if (GameState.rp < tech.costRP) {
+        addToast(`Poin Riset tidak cukup (${tech.costRP} RP dibutuhkan).`, 'rose');
+        return;
+      }
+      GameState.rp -= tech.costRP;
+      GameState.unlockedTech.add(techId);
+      SoundEngine.playBuild();
+      addToast(`Riset selesai: ${tech.name}!`, 'teal');
+      recalculateMetrics();
+      renderTechTree();
+      renderBuildCards();
+      updateHUD();
+    }
+
+    // =========================================================================
+    // 6. SIMULATION STEP, TIPPING POINTS & NARRATIVE EVENTS
+    // =========================================================================
+    function advanceQuarter() {
+      if (!GameState.running) return;
+
+      GameState.quarter += 1;
+      if (GameState.quarter > 4) {
+        GameState.quarter = 1;
+        GameState.year += 1;
+      }
+
+      const { cnt, quarterlyRev } = recalculateMetrics();
+
+      // Accumulate emissions & update Global Temperature
+      GameState.cumulativeEmission = Math.max(0, GameState.cumulativeEmission + (GameState.netEmission * 0.25));
+      GameState.temp = +(1.14 + 0.016 * Math.log(1 + GameState.cumulativeEmission * 1.45)).toFixed(2);
+
+      // Update Resources
+      GameState.budget += quarterlyRev;
+      GameState.cp = clamp(GameState.cp + 3 + Math.floor(GameState.educationLevel * 0.5), 0, 100);
+      GameState.rp += 4 + Math.floor(GameState.eco / 25);
+
+      // Trilemma Pillar Dynamics
+      // 1. Ecological Health
+      const ecoDelta = GameState.netEmission <= 0 ? 1.4 : -(GameState.netEmission * 0.22);
+      GameState.eco = clamp(GameState.eco + ecoDelta, 0, 100);
+
+      // 2. Economic Stability (affected by high Carbon Tax & extreme heat)
+      let econDelta = 0.4;
+      if (GameState.carbonTaxLevel === 3) econDelta -= 1.35;
+      else if (GameState.carbonTaxLevel === 2) econDelta -= 0.45;
+      if (GameState.temp > 1.5) econDelta -= GameState.unlockedTech.has('climate_crops') ? 0.5 : 1.2;
+      GameState.econ = clamp(GameState.econ + econDelta, 0, 100);
+
+      // 3. Social Approval
+      let socDelta = 0.35;
+      if (GameState.temp > 1.5) socDelta -= 1.1;
+      if (GameState.econ < 35) socDelta -= 1.0;
+      if (GameState.eco < 35) socDelta -= 0.9;
+      GameState.soc = clamp(GameState.soc + socDelta, 0, 100);
+
+      // Tipping Point Check: Sea Level Rise & Coastal Flooding
+      if (GameState.temp >= 1.38 && Math.random() < 0.28) {
+        const vulnerableCoasts = [];
+        for (let r = 0; r < GRID_SIZE; r++) {
+          for (let c = 0; c < GRID_SIZE; c++) {
+            const t = GameState.grid[r][c];
+            if (t.terrain === 'coast' && !t.structure && !t.flooded) vulnerableCoasts.push(t);
+          }
+        }
+        if (vulnerableCoasts.length > 0) {
+          const victim = vulnerableCoasts[Math.floor(Math.random() * vulnerableCoasts.length)];
+          victim.flooded = true;
+          GameState.soc = clamp(GameState.soc - 4, 0, 100);
+          GameState.econ = clamp(GameState.econ - 3, 0, 100);
+          SoundEngine.playAlert();
+          addToast(`⚠️ BANJIR ROB! Kenaikan air laut merendam pesisir [${victim.r},${victim.c}]. Bangun Mangrove/Tanggul!`, 'rose');
+        }
+      }
+
+      // Extreme Weather Event if Temp > 1.50°C
+      if (GameState.temp > 1.50 && GameState.quarter === 3 && Math.random() < 0.45) {
+        const cropShield = GameState.unlockedTech.has('climate_crops') ? 0.5 : 1.0;
+        GameState.econ = clamp(GameState.econ - Math.round(6 * cropShield), 0, 100);
+        GameState.soc = clamp(GameState.soc - Math.round(6 * cropShield), 0, 100);
+        SoundEngine.playAlert();
+        addToast(`🔥 GELOMBANG PANAS EKSTREM (+${GameState.temp}°C): Gagal panen menekan Ekonomi & Sosial!`, 'rose');
+      }
+
+      // Narrative Dilemma Trigger
+      if (GameState.quarter === 2) {
+        const pendingEv = NARRATIVE_EVENTS.find((ev) => !ev.triggered && GameState.year >= ev.minYear);
+        if (pendingEv) {
+          pendingEv.triggered = true;
+          triggerEvent(pendingEv);
+        }
+      }
+
+      SoundEngine.updateAmbience(GameState.temp, GameState.eco);
+      updateHUD();
+      checkWinOrLoss();
+    }
+
+    function triggerEvent(ev) {
+      const prevSpeed = GameState.speed;
+      setSpeed(0);
+      SoundEngine.playAlert();
+
+      document.getElementById('eventCategoryBadge').textContent = ev.category;
+      document.getElementById('eventYearTag').textContent = `Tahun ${GameState.year}`;
+      document.getElementById('eventTitle').textContent = ev.title;
+      document.getElementById('advisorAvatar').textContent = ev.avatar;
+      document.getElementById('advisorName').textContent = ev.advisor;
+      document.getElementById('eventDialogue').textContent = ev.dialogue;
+
+      const choicesBox = document.getElementById('eventChoices');
+      choicesBox.innerHTML = '';
+      ev.choices.forEach((ch) => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left glass-card rounded-2xl p-3.5 border border-slate-700/80 hover:border-teal-400 transition-all cursor-pointer';
+        btn.innerHTML = `
+          <div class="text-sm font-bold text-white">${ch.label}</div>
+          <div class="text-xs font-mono-tech text-teal-300 mt-1">${ch.impactText}</div>
+        `;
+        btn.onclick = () => {
+          ch.apply(GameState);
+          document.getElementById('eventModal').classList.add('hidden');
+          document.getElementById('eventModal').classList.remove('flex');
+          recalculateMetrics();
+          updateHUD();
+          checkWinOrLoss();
+          if (GameState.running) setSpeed(prevSpeed || 1);
+        };
+        choicesBox.appendChild(btn);
+      });
+
+      const modal = document.getElementById('eventModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function checkWinOrLoss() {
+      if (GameState.eco <= 0 || GameState.econ <= 0 || GameState.soc <= 0) {
+        let reason = 'Ekosistem mengalami keruntuhan total akibat krisis iklim.';
+        if (GameState.econ <= 0) reason = 'Perekonomian negara bangkrut dan kehilangan kepercayaan investor.';
+        if (GameState.soc <= 0) reason = 'Kerusuhan sosial meluas akibat kebijakan yang tidak berpihak pada rakyat.';
+        endGame(false, reason);
+        return;
+      }
+
+      if (GameState.year >= 2075) {
+        const success = GameState.temp <= 1.50;
+        const reason = success
+          ? `Luar biasa! Anda berhasil menahan pemanasan global pada +${GameState.temp}°C (di bawah batas kritis 1.50°C) dengan keseimbangan sosial dan ekonomi yang kokoh.`
+          : `Mandat 50 tahun selesai pada tahun 2075, namun suhu bumi mencapai +${GameState.temp}°C (melampaui batas aman 1.50°C). Transisi energi perlu dipercepat.`;
+        endGame(success, reason);
+      }
+    }
+
+    function endGame(won, summaryText) {
+      GameState.running = false;
+      setSpeed(0);
+
+      const badge = document.getElementById('endBadge');
+      const title = document.getElementById('endTitle');
+      if (won) {
+        badge.textContent = '🏆 VICTORY • TARGET IKLIM GLOBAL TERCAPAI';
+        badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+        title.textContent = 'Era Net-Zero 2075 Berhasil Diwujudkan!';
+      } else {
+        badge.textContent = '⚠️ MANDAT BERAKHIR • EVALUASI KRISIS';
+        badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 bg-rose-500/20 text-rose-300 border border-rose-400/40';
+        title.textContent = GameState.year >= 2075 ? 'Ambang Batas 1.50°C Terlampaui' : 'Pemerintahan Runtuh';
+      }
+
+      document.getElementById('endSummary').textContent = summaryText;
+      document.getElementById('endStatsGrid').innerHTML = `
+        <div class="glass-card rounded-xl p-3">
+          <div class="text-[10px] text-slate-400 uppercase">Suhu Akhir</div>
+          <div class="font-mono-tech text-base font-bold ${GameState.temp <= 1.5 ? 'text-emerald-300' : 'text-rose-400'}">+${GameState.temp}°C</div>
+        </div>
+        <div class="glass-card rounded-xl p-3">
+          <div class="text-[10px] text-slate-400 uppercase">Emisi Bersih</div>
+          <div class="font-mono-tech text-base font-bold text-teal-300">${GameState.netEmission} Gt/thn</div>
+        </div>
+        <div class="glass-card rounded-xl p-3">
+          <div class="text-[10px] text-slate-400 uppercase">Ekologi / Ekonomi</div>
+          <div class="font-mono-tech text-base font-bold text-amber-300">${Math.round(GameState.eco)}% / ${Math.round(GameState.econ)}%</div>
+        </div>
+        <div class="glass-card rounded-xl p-3">
+          <div class="text-[10px] text-slate-400 uppercase">Dukungan Sosial</div>
+          <div class="font-mono-tech text-base font-bold text-sky-300">${Math.round(GameState.soc)}%</div>
+        </div>
+      `;
+
+      const modal = document.getElementById('endModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // =========================================================================
+    // 7. UI RENDERERS & HUD UPDATES
+    // =========================================================================
+    function renderBuildCards() {
+      const container = document.getElementById('buildCardsContainer');
+      container.innerHTML = '';
+
+      Object.values(BUILDINGS).forEach((b) => {
+        const locked = b.reqTech && !GameState.unlockedTech.has(b.reqTech);
+        const isSelected = GameState.selectedBuild === b.id;
+
+        const btn = document.createElement('button');
+        btn.disabled = locked;
+        btn.className = `glass-card rounded-xl p-2.5 text-left flex flex-col justify-between cursor-pointer ${isSelected ? 'selected' : ''} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`;
+        btn.onclick = () => selectBuildTool(b.id);
+
+        const badgeColor = b.category === 'mitigation'
+          ? 'text-emerald-300 bg-emerald-500/15'
+          : (b.category === 'adaptation' ? 'text-sky-300 bg-sky-500/15' : 'text-rose-300 bg-rose-500/15');
+
+        btn.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-1 mb-1">
+              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${badgeColor}">${locked ? '🔒 Riset' : b.category}</span>
+              <span class="font-mono-tech text-[11px] font-bold text-amber-300">$${b.cost}M</span>
+            </div>
+            <div class="font-bold text-xs text-white leading-snug">${b.name}</div>
+          </div>
+          <div class="text-[10px] text-slate-400 mt-1.5 font-mono-tech">
+            ${b.emission !== 0 ? `CO2: ${b.emission > 0 ? '+' : ''}${b.emission} Gt` : 'Aksi Lahan'}
+          </div>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderPolicies() {
+      const container = document.getElementById('policyCardsContainer');
+      container.innerHTML = '';
+
+      POLICIES.forEach((p) => {
+        const onCd = p.cooldown > 0;
+        const card = document.createElement('button');
+        card.disabled = onCd;
+        card.className = `glass-card rounded-xl p-2.5 text-left flex flex-col justify-between cursor-pointer ${onCd ? 'opacity-50 cursor-not-allowed' : ''}`;
+        card.onclick = () => enactPolicy(p.id);
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300">${p.tag}</span>
+              <span class="font-mono-tech text-[10px] text-purple-300">${p.costPol} CP • $${p.costBudget}M</span>
+            </div>
+            <div class="font-bold text-xs text-white">${p.name}</div>
+            <p class="text-[10px] text-slate-400 mt-1 leading-snug">${p.desc}</p>
+          </div>
+          <div class="mt-2 text-[10px] font-mono-tech font-bold ${onCd ? 'text-amber-300' : 'text-teal-300'}">
+            ${onCd ? `Jeda: ${p.cooldown} Kuartal` : 'Aktifkan Kebijakan →'}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderTechTree() {
+      const mitBox = document.getElementById('techMitigationList');
+      const adpBox = document.getElementById('techAdaptationList');
+      mitBox.innerHTML = '';
+      adpBox.innerHTML = '';
+
+      TECH_TREE.forEach((t) => {
+        const unlocked = GameState.unlockedTech.has(t.id);
+        const card = document.createElement('button');
+        card.disabled = unlocked;
+        card.className = `glass-card rounded-xl p-2.5 text-left flex flex-col justify-between cursor-pointer ${unlocked ? 'border-emerald-400/50 bg-emerald-950/30' : ''}`;
+        card.onclick = () => researchTech(t.id);
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-xs text-white">${t.name}</span>
+              <span class="font-mono-tech text-[10px] font-bold ${unlocked ? 'text-emerald-300' : 'text-cyan-300'}">
+                ${unlocked ? '✓ Aktif' : `${t.costRP} RP`}
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400 leading-snug">${t.desc}</p>
+          </div>
+        `;
+        if (t.branch === 'mitigation') mitBox.appendChild(card);
+        else adpBox.appendChild(card);
+      });
+    }
+
+    function updateHUD() {
+      // Era Badge (5 Eras from PDF)
+      let eraText = 'Babak 1: Titik Didih';
+      if (GameState.year >= 2065) eraText = 'Babak 5: Era Net-Zero';
+      else if (GameState.year >= 2055) eraText = 'Babak 4: Diplomasi Global';
+      else if (GameState.year >= 2045) eraText = 'Babak 3: Transisi Berdarah';
+      else if (GameState.year >= 2035) eraText = 'Babak 2: Krisis Pesisir';
+
+      document.getElementById('eraBadge').textContent = eraText;
+      document.getElementById('yearDisplay').textContent = `${GameState.year} • Q${GameState.quarter}`;
+
+      const progressPct = clamp(((GameState.year - 2025) / 50) * 100, 1, 100);
+      document.getElementById('timelineProgress').style.width = `${progressPct}%`;
+
+      // Thermometer
+      const tempEl = document.getElementById('tempDisplay');
+      const thermoBox = document.getElementById('thermoBox');
+      tempEl.textContent = `+${GameState.temp.toFixed(2)}°C`;
+      const mercuryPct = clamp(((GameState.temp - 1.0) / 0.9) * 100, 15, 100);
+      document.getElementById('mercuryFill').style.height = `${mercuryPct}%`;
+
+      if (GameState.temp >= 1.45) {
+        tempEl.className = 'font-mono-tech text-base font-bold text-rose-400';
+        thermoBox.classList.add('danger-pulse');
+      } else {
+        tempEl.className = 'font-mono-tech text-base font-bold text-amber-400';
+        thermoBox.classList.remove('danger-pulse');
+      }
+
+      // Net Emission
+      const emEl = document.getElementById('emissionDisplay');
+      emEl.textContent = `${GameState.netEmission > 0 ? '+' : ''}${GameState.netEmission} Gt`;
+      emEl.className = `font-mono-tech text-sm font-bold ${GameState.netEmission <= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      // 3 Pillars
+      const ecoR = Math.round(GameState.eco);
+      const econR = Math.round(GameState.econ);
+      const socR = Math.round(GameState.soc);
+
+      document.getElementById('ecoVal').textContent = `${ecoR}%`;
+      document.getElementById('ecoBar').style.width = `${ecoR}%`;
+      document.getElementById('econVal').textContent = `${econR}%`;
+      document.getElementById('econBar').style.width = `${econR}%`;
+      document.getElementById('socVal').textContent = `${socR}%`;
+      document.getElementById('socBar').style.width = `${socR}%`;
+
+      // Resources
+      document.getElementById('budgetDisplay').textContent = `$${Math.round(GameState.budget)}M`;
+      document.getElementById('polDisplay').textContent = `${Math.round(GameState.cp)} CP`;
+      document.getElementById('resDisplay').textContent = `${Math.round(GameState.rp)} RP`;
+
+      // Telemetry Tab Breakdown
+      const metrics = recalculateMetrics();
+      const formulaDiv = document.getElementById('formulaBreakdown');
+      if (formulaDiv) {
+        formulaDiv.innerHTML = `
+          <div>• Emisi Fosil (${metrics.cnt.coal} PLTU): <span class="text-rose-400">+${metrics.fossilEm.toFixed(1)} Gt</span></div>
+          <div>• Emisi Transportasi (${metrics.cnt.cities} Kota): <span class="text-amber-300">+${metrics.transportEm.toFixed(1)} Gt</span></div>
+          <div>• Serapan Hutan & Mangrove: <span class="text-emerald-400">-${metrics.forestSink.toFixed(1)} Gt</span></div>
+          <div>• Energi Bersih & DAC: <span class="text-cyan-300">-${metrics.cleanSink.toFixed(1)} Gt</span></div>
+          <div class="pt-1 border-t border-slate-700/70">• Pendapatan Kuartalan: <span class="text-emerald-300">+$${metrics.quarterlyRev}M</span></div>
+        `;
+      }
+
+      const sdgDiv = document.getElementById('sdgTargetsContainer');
+      if (sdgDiv) {
+        const coastPct = metrics.cnt.totalCoast > 0 ? Math.round((metrics.cnt.protectedCoast / metrics.cnt.totalCoast) * 100) : 100;
+        const techPct = Math.round((GameState.unlockedTech.size / TECH_TREE.length) * 100);
+        sdgDiv.innerHTML = `
+          <div class="glass-card rounded-xl p-2.5">
+            <div class="text-[10px] font-bold text-sky-300">Target • Adaptasi</div>
+            <div class="font-mono-tech text-sm font-bold text-white mt-0.5">${coastPct}% Pesisir</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Terlindung mangrove/tanggul</div>
+          </div>
+          <div class="glass-card rounded-xl p-2.5">
+            <div class="text-[10px] font-bold text-emerald-300">Target • Kebijakan</div>
+            <div class="font-mono-tech text-sm font-bold text-white mt-0.5">${GameState.netEmission <= 0 ? 'Net-Zero!' : GameState.netEmission + ' Gt'}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Integrasi regulasi karbon</div>
+          </div>
+          <div class="glass-card rounded-xl p-2.5">
+            <div class="text-[10px] font-bold text-amber-300">Target • Kapasitas</div>
+            <div class="font-mono-tech text-sm font-bold text-white mt-0.5">${techPct}% Riset</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Edukasi & inovasi hijau</div>
+          </div>
+          <div class="glass-card rounded-xl p-2.5">
+            <div class="text-[10px] font-bold text-purple-300">Target • Pendanaan</div>
+            <div class="font-mono-tech text-sm font-bold text-white mt-0.5">${GameState.gcfApproved}x GCF</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Green Climate Fund</div>
+          </div>
+        `;
+      }
+    }
+
+    function switchTab(tabName) {
+      SoundEngine.playClick();
+      GameState.activeTab = tabName;
+      ['Build', 'Policy', 'Tech', 'Sdg'].forEach((t) => {
+        document.getElementById(`tab${t}`).classList.toggle('hidden', t !== tabName);
+        const navBtn = document.getElementById(`nav${t}`);
+        if (t === tabName) {
+          navBtn.className = 'nav-tab px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 bg-teal-500/25 text-teal-300 border border-teal-400/40';
+        } else {
+          navBtn.className = 'nav-tab px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 text-slate-300 hover:bg-slate-800/70';
+        }
+      });
+      if (tabName === 'Policy') renderPolicies();
+      if (tabName === 'Tech') renderTechTree();
+      if (tabName === 'Sdg') updateHUD();
+    }
+
+    function updateTileInspector(tile) {
+      if (!tile) return;
+      const terrainNames = {
+        ocean: 'Perairan Laut',
+        coast: 'Wilayah Pesisir',
+        grassland: 'Dataran Rendah',
+        highland: 'Dataran Tinggi'
+      };
+      const structInfo = {
+        city: { title: 'Kota Metropolitan', desc: 'Pusat ekonomi & populasi. Menghasilkan pendapatan pajak dan emisi transportasi.', stats: 'Pajak +$5M • Emisi +1.4 Gt' },
+        coal: { title: 'PLTU Batubara', desc: 'Pembangkit listrik fosil murah namun penghasil emisi karbon utama. Gunakan alat Tutup/Bongkar untuk transisi.', stats: 'Pajak +$4M • Emisi +2.6 Gt' },
+        forest: { title: 'Hutan Tropis Alami', desc: 'Paru-paru kepulauan yang menyerap emisi CO2 dan menjaga kesehatan ekosistem.', stats: 'Serapan -0.85 Gt • +Ekologi' },
+        mangrove: { title: 'Hutan Bakau (Mangrove)', desc: 'Ekosistem pesisir penyerap karbon biru & pemecah ombak alami dari banjir rob.', stats: 'Serapan -1.1 Gt • Anti-Rob' },
+        solar: { title: 'PLTS Surya Terpadu', desc: 'Pembangkit tenaga surya ramah lingkungan dengan biaya operasional rendah.', stats: 'Serapan -1.3 Gt • Bersih' },
+        wind: { title: 'Turbin Angin Lepas Pantai', desc: 'Pembangkit energi angin laut efisiensi tinggi.', stats: 'Serapan -2.0 Gt • Bersih' },
+        seawall: { title: 'Tanggul Laut Raksasa', desc: 'Infrastruktur beton pelindung daratan pesisir dari kenaikan permukaan air laut.', stats: 'Perlindungan Banjir Rob' },
+        ccs: { title: 'Fasilitas Direct Air Capture', desc: 'Menyedot karbon dioksida langsung dari atmosfer secara masif.', stats: 'Serapan -3.5 Gt • Tinggi' }
+      };
+
+      document.getElementById('tileTerrainTag').textContent = terrainNames[tile.terrain] || tile.terrain;
+      document.getElementById('tileCoords').textContent = `[${tile.r}, ${tile.c}]`;
+
+      const statsEl = document.getElementById('tileStats');
+      if (tile.structure && structInfo[tile.structure]) {
+        const info = structInfo[tile.structure];
+        document.getElementById('tileTitle').textContent = info.title;
+        document.getElementById('tileDesc').textContent = info.desc;
+        statsEl.textContent = info.stats;
+        statsEl.classList.remove('hidden');
+      } else {
+        document.getElementById('tileTitle').textContent = tile.flooded ? '⚠️ Pesisir Terendam Rob!' : `Lahan ${terrainNames[tile.terrain]}`;
+        document.getElementById('tileDesc').textContent = tile.flooded
+          ? 'Kenaikan suhu memicu banjir rob! Segera bangun Mangrove atau Tanggul Laut.'
+          : 'Lahan kosong siap dikembangkan untuk infrastruktur hijau atau konservasi.';
+        statsEl.classList.add('hidden');
+      }
+    }
+
+    function addToast(msg, color = 'teal') {
+      const feed = document.getElementById('alertFeed');
+      const el = document.createElement('div');
+      const borderMap = {
+        teal: 'border-teal-400/50 text-teal-100',
+        emerald: 'border-emerald-400/50 text-emerald-100',
+        amber: 'border-amber-400/50 text-amber-100',
+        rose: 'border-rose-500/60 text-rose-100'
+      };
+      el.className = `glass-panel rounded-xl px-3.5 py-2.5 text-xs font-medium border ${borderMap[color] || borderMap.teal} toast-anim shadow-lg`;
+      el.textContent = msg;
+      feed.prepend(el);
+      setTimeout(() => el.remove(), 3600);
+    }
+
+    // =========================================================================
+    // 8. 2.5D ISOMETRIC DIORAMA RENDERER (HTML5 CANVAS)
+    // =========================================================================
+    const canvas = document.getElementById('dioramaCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const Camera = {
+      x: 0,
+      y: 0,
+      zoom: 1.0,
+      dragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      movedDuringDrag: false
+    };
+
+    let hoveredTile = null;
+    const TILE_W = 86;
+    const TILE_H = 44;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * window.devicePixelRatio;
+      canvas.height = window.innerHeight * window.devicePixelRatio;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      if (Camera.x === 0 && Camera.y === 0) resetCamera();
+    }
+
+    function resetCamera() {
+      Camera.x = window.innerWidth / 2;
+      Camera.y = window.innerHeight * 0.27;
+      Camera.zoom = window.innerWidth < 768 ? 0.72 : 1.02;
+    }
+
+    function adjustZoom(delta) {
+      Camera.zoom = clamp(Camera.zoom + delta, 0.55, 1.75);
+    }
+
+    function isoToScreen(r, c) {
+      const x = (c - r) * (TILE_W / 2) * Camera.zoom + Camera.x;
+      const y = (c + r) * (TILE_H / 2) * Camera.zoom + Camera.y;
+      return { x, y };
+    }
+
+    function screenToIso(sx, sy) {
+      const adjX = (sx - Camera.x) / Camera.zoom;
+      const adjY = (sy - Camera.y) / Camera.zoom;
+      const c = Math.floor((adjX / (TILE_W / 2) + adjY / (TILE_H / 2)) / 2);
+      const r = Math.floor((adjY / (TILE_H / 2) - adjX / (TILE_W / 2)) / 2);
+      if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+        return GameState.grid[r][c];
+      }
+      return null;
+    }
+
+    function spawnParticles(tile, color) {
+      const pos = isoToScreen(tile.r, tile.c);
+      for (let i = 0; i < 14; i++) {
+        GameState.particles.push({
+          x: pos.x,
+          y: pos.y + 10,
+          vx: (Math.random() - 0.5) * 3,
+          vy: -Math.random() * 2.8 - 0.8,
+          life: 1.0,
+          color
+        });
+      }
+    }
+
+    function lerpColor(hexA, hexB, t) {
+      const a = parseInt(hexA.slice(1), 16);
+      const b = parseInt(hexB.slice(1), 16);
+      const rA = (a >> 16) & 255, gA = (a >> 8) & 255, bA = a & 255;
+      const rB = (b >> 16) & 255, gB = (b >> 8) & 255, bB = b & 255;
+      const r = Math.round(rA + (rB - rA) * t);
+      const g = Math.round(gA + (gB - gA) * t);
+      const bl = Math.round(bA + (bB - bA) * t);
+      return `rgb(${r},${g},${bl})`;
+    }
+
+    function renderDiorama(timestamp) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const tSec = timestamp * 0.001;
+
+      const stress = clamp((GameState.temp - 1.15) / 0.75, 0, 1);
+
+      // Background War Table Atmosphere
+      const bgGrad = ctx.createRadialGradient(w / 2, h * 0.45, 50, w / 2, h * 0.5, Math.max(w, h) * 0.75);
+      bgGrad.addColorStop(0, lerpColor('#0e2438', '#2a1816', stress));
+      bgGrad.addColorStop(1, '#050910');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Holographic ring
+      ctx.save();
+      ctx.strokeStyle = stress > 0.5 ? 'rgba(244, 63, 94, 0.08)' : 'rgba(45, 212, 191, 0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(Camera.x, Camera.y + (GRID_SIZE * TILE_H * 0.5) * Camera.zoom, 420 * Camera.zoom, 220 * Camera.zoom, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      const tw = TILE_W * Camera.zoom;
+      const th = TILE_H * Camera.zoom;
+
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const tile = GameState.grid[r][c];
+          const { x, y } = isoToScreen(r, c);
+          const waveOffset = tile.terrain === 'ocean' ? Math.sin(tSec * 2 + tile.animOffset) * 2.2 * Camera.zoom : 0;
+
+          let blockDepth = 12 * Camera.zoom;
+          if (tile.terrain === 'highland') blockDepth = 24 * Camera.zoom;
+          else if (tile.terrain === 'grassland') blockDepth = 16 * Camera.zoom;
+          else if (tile.terrain === 'coast') blockDepth = 10 * Camera.zoom;
+          else if (tile.terrain === 'ocean') blockDepth = 6 * Camera.zoom;
+
+          const topY = y - blockDepth + waveOffset;
+
+          let topColor, leftColor, rightColor;
+          if (tile.terrain === 'ocean') {
+            topColor = lerpColor('#0284c7', '#475569', stress * 0.7);
+            leftColor = '#0369a1';
+            rightColor = '#075985';
+          } else if (tile.terrain === 'coast') {
+            topColor = tile.flooded
+              ? '#0ea5e9'
+              : lerpColor('#d6c79c', '#9a8468', stress);
+            leftColor = '#8c7a5b';
+            rightColor = '#6e5f46';
+          } else if (tile.terrain === 'highland') {
+            topColor = lerpColor('#15803d', '#786346', stress);
+            leftColor = '#475569';
+            rightColor = '#334155';
+          } else {
+            topColor = lerpColor('#16a34a', '#856d47', stress);
+            leftColor = '#15803d';
+            rightColor = '#166534';
+          }
+
+          // Left face
+          ctx.fillStyle = leftColor;
+          ctx.beginPath();
+          ctx.moveTo(x - tw / 2, topY + th / 2);
+          ctx.lineTo(x, topY + th);
+          ctx.lineTo(x, y + th);
+          ctx.lineTo(x - tw / 2, y + th / 2);
+          ctx.closePath();
+          ctx.fill();
+
+          // Right face
+          ctx.fillStyle = rightColor;
+          ctx.beginPath();
+          ctx.moveTo(x + tw / 2, topY + th / 2);
+          ctx.lineTo(x, topY + th);
+          ctx.lineTo(x, y + th);
+          ctx.lineTo(x + tw / 2, y + th / 2);
+          ctx.closePath();
+          ctx.fill();
+
+          // Top Diamond Face
+          ctx.fillStyle = topColor;
+          ctx.beginPath();
+          ctx.moveTo(x, topY);
+          ctx.lineTo(x + tw / 2, topY + th / 2);
+          ctx.lineTo(x, topY + th);
+          ctx.lineTo(x - tw / 2, topY + th / 2);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(15, 23, 42, 0.32)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          if (GameState.selectedBuild) {
+            const b = BUILDINGS[GameState.selectedBuild];
+            const isValid = b.id === 'demolish'
+              ? (tile.structure && tile.structure !== 'city')
+              : (b.allowedTerrain.includes(tile.terrain) && !tile.structure);
+            if (isValid) {
+              ctx.fillStyle = 'rgba(45, 212, 191, 0.24)';
+              ctx.fill();
+            }
+          }
+
+          if (hoveredTile && hoveredTile.r === r && hoveredTile.c === c) {
+            ctx.strokeStyle = '#2dd4bf';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+
+          if (tile.structure) {
+            drawStructure(ctx, tile.structure, x, topY + th * 0.48, Camera.zoom, tSec, stress);
+          } else if (tile.flooded) {
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(x, topY + th / 2, (8 + Math.sin(tSec * 4) * 3) * Camera.zoom, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Particles
+      for (let i = GameState.particles.length - 1; i >= 0; i--) {
+        const p = GameState.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.025;
+        if (p.life <= 0) {
+          GameState.particles.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.5 * Camera.zoom, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      if (stress > 0.35) {
+        ctx.fillStyle = `rgba(180, 83, 9, ${(stress - 0.35) * 0.16})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      requestAnimationFrame(renderDiorama);
+    }
+
+    function drawStructure(ctx, type, cx, cy, z, tSec, stress) {
+      ctx.save();
+      if (type === 'forest' || type === 'mangrove') {
+        const treeColor = type === 'mangrove' ? '#059669' : lerpColor('#22c55e', '#a16207', stress * 0.8);
+        const offsets = [[-8, 2], [7, 3], [0, -5]];
+        offsets.forEach(([ox, oy]) => {
+          ctx.fillStyle = '#5c4033';
+          ctx.fillRect(cx + (ox - 1.5) * z, cy + oy * z, 3 * z, 6 * z);
+          ctx.fillStyle = treeColor;
+          ctx.beginPath();
+          ctx.arc(cx + ox * z, cy + (oy - 4) * z, 7 * z, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else if (type === 'city') {
+        const buildings = [
+          { ox: -9, oy: 2, w: 8, h: 18, col: '#38bdf8' },
+          { ox: 2, oy: 4, w: 9, h: 24, col: '#0284c7' },
+          { ox: -2, oy: -4, w: 7, h: 15, col: '#7dd3fc' }
+        ];
+        buildings.forEach((b) => {
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(cx + b.ox * z, cy + (b.oy - b.h) * z, b.w * z, b.h * z);
+          ctx.fillStyle = b.col;
+          ctx.fillRect(cx + (b.ox + 1.5) * z, cy + (b.oy - b.h + 3) * z, (b.w - 3) * z, (b.h - 5) * z);
+        });
+      } else if (type === 'coal') {
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(cx - 12 * z, cy - 10 * z, 24 * z, 12 * z);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(cx - 8 * z, cy - 22 * z, 5 * z, 12 * z);
+        ctx.fillRect(cx + 3 * z, cy - 22 * z, 5 * z, 12 * z);
+        for (let i = 0; i < 3; i++) {
+          const cycle = (tSec * 0.9 + i * 0.33) % 1;
+          ctx.fillStyle = `rgba(100, 116, 139, ${0.65 * (1 - cycle)})`;
+          ctx.beginPath();
+          ctx.arc(cx - 5 * z + cycle * 12 * z, cy - (24 + cycle * 18) * z, (4 + cycle * 5) * z, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (type === 'solar') {
+        [-8, 4].forEach((ox) => {
+          ctx.fillStyle = '#1d4ed8';
+          ctx.strokeStyle = '#93c5fd';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx + ox * z, cy - 4 * z);
+          ctx.lineTo(cx + (ox + 10) * z, cy - 7 * z);
+          ctx.lineTo(cx + (ox + 12) * z, cy + 1 * z);
+          ctx.lineTo(cx + (ox + 2) * z, cy + 4 * z);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        });
+      } else if (type === 'wind') {
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2.4 * z;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + 4 * z);
+        ctx.lineTo(cx, cy - 24 * z);
+        ctx.stroke();
+
+        const hubX = cx;
+        const hubY = cy - 24 * z;
+        ctx.lineWidth = 1.6 * z;
+        for (let b = 0; b < 3; b++) {
+          const angle = tSec * 2.5 + (b * Math.PI * 2) / 3;
+          ctx.beginPath();
+          ctx.moveTo(hubX, hubY);
+          ctx.lineTo(hubX + Math.cos(angle) * 12 * z, hubY + Math.sin(angle) * 12 * z);
+          ctx.stroke();
+        }
+      } else if (type === 'seawall') {
+        ctx.fillStyle = '#94a3b8';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - 16 * z, cy + 2 * z);
+        ctx.lineTo(cx, cy + 10 * z);
+        ctx.lineTo(cx + 16 * z, cy + 2 * z);
+        ctx.lineTo(cx + 16 * z, cy - 4 * z);
+        ctx.lineTo(cx, cy + 4 * z);
+        ctx.lineTo(cx - 16 * z, cy - 4 * z);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (type === 'ccs') {
+        ctx.fillStyle = '#6b21a8';
+        ctx.fillRect(cx - 9 * z, cy - 18 * z, 18 * z, 20 * z);
+        ctx.fillStyle = '#c084fc';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 20 * z, 8 * z, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Mouse & Touch Events
+    canvas.addEventListener('mousedown', (e) => {
+      Camera.dragging = true;
+      Camera.movedDuringDrag = false;
+      Camera.dragStartX = e.clientX - Camera.x;
+      Camera.dragStartY = e.clientY - Camera.y;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (Camera.dragging) {
+        const dx = (e.clientX - Camera.dragStartX) - Camera.x;
+        const dy = (e.clientY - Camera.dragStartY) - Camera.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) Camera.movedDuringDrag = true;
+        Camera.x = e.clientX - Camera.dragStartX;
+        Camera.y = e.clientY - Camera.dragStartY;
+      }
+      const tile = screenToIso(e.clientX, e.clientY);
+      if (tile !== hoveredTile) {
+        hoveredTile = tile;
+        if (tile) updateTileInspector(tile);
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (Camera.dragging && !Camera.movedDuringDrag) {
+        const tile = screenToIso(e.clientX, e.clientY);
+        if (tile) handleTileClick(tile);
+      }
+      Camera.dragging = false;
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        Camera.dragging = true;
+        Camera.movedDuringDrag = false;
+        Camera.dragStartX = touch.clientX - Camera.x;
+        Camera.dragStartY = touch.clientY - Camera.y;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (Camera.dragging && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const dx = (touch.clientX - Camera.dragStartX) - Camera.x;
+        const dy = (touch.clientY - Camera.dragStartY) - Camera.y;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) Camera.movedDuringDrag = true;
+        Camera.x = touch.clientX - Camera.dragStartX;
+        Camera.y = touch.clientY - Camera.dragStartY;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (Camera.dragging && !Camera.movedDuringDrag && e.changedTouches.length === 1) {
+        const touch = e.changedTouches[0];
+        const tile = screenToIso(touch.clientX, touch.clientY);
+        if (tile) handleTileClick(tile);
+      }
+      Camera.dragging = false;
+    });
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      adjustZoom(e.deltaY < 0 ? 0.1 : -0.1);
+    }, { passive: false });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') selectBuildTool(null);
+      if (e.key === ' ') {
+        e.preventDefault();
+        setSpeed(GameState.speed === 0 ? 1 : 0);
+      }
+    });
+
+    // =========================================================================
+    // 9. SIMULATION LOOP & STARTUP
+    // =========================================================================
+    let simTimer = null;
+
+    function setSpeed(spd) {
+      GameState.speed = spd;
+      [0, 1, 2, 3].forEach((s) => {
+        const btn = document.getElementById(`btnSpeed${s}`);
+        if (s === spd) {
+          btn.className = 'speed-btn px-2 py-1 rounded-lg text-xs font-bold bg-teal-500/30 text-teal-300 border border-teal-400/40';
+        } else {
+          btn.className = 'speed-btn px-2 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800';
+        }
+      });
+
+      if (simTimer) clearInterval(simTimer);
+      if (spd > 0 && GameState.running) {
+        const intervalMs = spd === 1 ? 2100 : (spd === 2 ? 1100 : 550);
+        simTimer = setInterval(() => {
+          POLICIES.forEach((p) => { if (p.cooldown > 0) p.cooldown--; });
+          if (GameState.activeTab === 'Policy') renderPolicies();
+          advanceQuarter();
+        }, intervalMs);
+      }
+    }
+
+    function startGame() {
+      document.getElementById('startModal').classList.add('hidden');
+      GameState.running = true;
+      SoundEngine.init();
+      setSpeed(1);
+      addToast('Mandat dimulai! Turunkan emisi sebelum suhu menembus +1.50°C.', 'teal');
+    }
+
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    initMap();
+    resizeCanvas();
+    renderBuildCards();
+    renderPolicies();
+    renderTechTree();
+    updateHUD();
+    requestAnimationFrame(renderDiorama);
+  </script>
+</body>
+</html>
